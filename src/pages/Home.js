@@ -1,37 +1,54 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 import CourseCard from '../components/CourseCard';
+import CategoryFilter from '../components/CategoryFilter';
+import SearchBar from '../components/SearchBar';
+import Pagination from '../components/Pagination';
+import { useCourses } from '../hooks/useCourses';
+
+const ITEMS_PER_PAGE = 9;
 
 const Home = () => {
-  // Dummy data untuk contoh
-  const featuredCourses = [
-    {
-      id: 1,
-      title: "Big 4 Auditor Financial Analyst",
-      description: "Mulai transformasi dengan instruktur profesional, harga yang terjangkau, dan...",
-      instructor: { name: "Jenna Ortega", avatar: "/path/to/avatar.jpg" },
-      price: 300000,
-      image: "/path/to/course-image.jpg"
-    },
-    // Tambahkan kursus lainnya di sini
-  ];
+  const { courses, loading, error } = useCourses();
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const filteredCourses = courses
+    .filter(course => selectedCategory === 'All' || course.category === selectedCategory)
+    .filter(course => course.title.toLowerCase().includes(searchTerm.toLowerCase()));
+
+  const totalPages = Math.ceil(filteredCourses.length / ITEMS_PER_PAGE);
+
+  const paginatedCourses = filteredCourses.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <section className="mb-16">
-        <h1 className="text-4xl font-bold mb-4">Revolusi Pembelajaran: Temukan Ilmu Baru melalui Platform Video Interaktif!</h1>
-        <p className="mb-8 text-xl">Temukan ilmu baru yang menarik dan mendalam melalui koleksi video pembelajaran berkualitas tinggi. Tidak hanya itu, Anda juga dapat berpartisipasi dalam latihan interaktif yang akan meningkatkan pemahaman Anda.</p>
-        <Link to="/courses" className="bg-blue-500 text-white px-8 py-3 rounded-full text-lg hover:bg-blue-600">Temukan Video Course untuk Dipelajari!</Link>
-      </section>
-
-      <section>
-        <h2 className="text-3xl font-bold mb-8">Koleksi Video Pembelajaran Unggulan</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {featuredCourses.map(course => (
-            <CourseCard key={course.id} course={course} />
-          ))}
-        </div>
-      </section>
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <main className="flex-grow container mx-auto px-4 py-8">
+        {/* ... existing code ... */}
+        <section className="mt-12">
+          <h2 className="text-2xl font-semibold mb-6">All Courses</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {paginatedCourses.map(course => (
+              <CourseCard key={course.id} course={course} />
+            ))}
+          </div>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        </section>
+      </main>
+      <Footer />
     </div>
   );
 };
